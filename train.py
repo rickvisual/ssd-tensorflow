@@ -54,7 +54,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train the SSD')
     parser.add_argument('--name', default='test',
                         help='project name')
-    parser.add_argument('--data-dir', default='pascal-voc',
+    parser.add_argument('--data-dir', default='data',
                         help='data directory')
     parser.add_argument('--vgg-dir', default='vgg_graph',
                         help='directory for the VGG-16 model')
@@ -141,8 +141,8 @@ def main():
             print('[i] Creating directory {}...'.format(args.name))
             os.makedirs(args.name)
         except (IOError) as e:
-            print('[!]', str(e))
-            return 1
+            os.removedirs(args.name)
+            os.makedirs(args.name)
 
     print('[i] Starting at epoch:    ', start_epoch+1)
 

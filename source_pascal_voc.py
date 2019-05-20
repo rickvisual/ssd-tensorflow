@@ -35,26 +35,28 @@ from tqdm import tqdm
 # Labels
 #-------------------------------------------------------------------------------
 label_defs = [
-    Label('aeroplane',   rgb2bgr((0,     0,   0))),
-    Label('bicycle',     rgb2bgr((111,  74,   0))),
-    Label('bird',        rgb2bgr(( 81,   0,  81))),
-    Label('boat',        rgb2bgr((128,  64, 128))),
-    Label('bottle',      rgb2bgr((244,  35, 232))),
-    Label('bus',         rgb2bgr((230, 150, 140))),
-    Label('car',         rgb2bgr(( 70,  70,  70))),
-    Label('cat',         rgb2bgr((102, 102, 156))),
-    Label('chair',       rgb2bgr((190, 153, 153))),
-    Label('cow',         rgb2bgr((150, 120,  90))),
-    Label('diningtable', rgb2bgr((153, 153, 153))),
-    Label('dog',         rgb2bgr((250, 170,  30))),
-    Label('horse',       rgb2bgr((220, 220,   0))),
-    Label('motorbike',   rgb2bgr((107, 142,  35))),
-    Label('person',      rgb2bgr(( 52, 151,  52))),
-    Label('pottedplant', rgb2bgr(( 70, 130, 180))),
-    Label('sheep',       rgb2bgr((220,  20,  60))),
-    Label('sofa',        rgb2bgr((  0,   0, 142))),
-    Label('train',       rgb2bgr((  0,   0, 230))),
-    Label('tvmonitor',   rgb2bgr((119,  11,  32)))]
+    # Label('aeroplane',   rgb2bgr((0,     0,   0))),
+    # Label('bicycle',     rgb2bgr((111,  74,   0))),
+    # Label('bird',        rgb2bgr(( 81,   0,  81))),
+    # Label('boat',        rgb2bgr((128,  64, 128))),
+    # Label('bottle',      rgb2bgr((244,  35, 232))),
+    # Label('bus',         rgb2bgr((230, 150, 140))),
+    # Label('car',         rgb2bgr(( 70,  70,  70))),
+    # Label('cat',         rgb2bgr((102, 102, 156))),
+    # Label('chair',       rgb2bgr((190, 153, 153))),
+    # Label('cow',         rgb2bgr((150, 120,  90))),
+    # Label('diningtable', rgb2bgr((153, 153, 153))),
+    # Label('dog',         rgb2bgr((250, 170,  30))),
+    # Label('horse',       rgb2bgr((220, 220,   0))),
+    # Label('motorbike',   rgb2bgr((107, 142,  35))),
+    # Label('person',      rgb2bgr(( 52, 151,  52)))
+    # Label('pottedplant', rgb2bgr(( 70, 130, 180))),
+    # Label('sheep',       rgb2bgr((220,  20,  60))),
+    # Label('sofa',        rgb2bgr((  0,   0, 142))),
+    # Label('train',       rgb2bgr((  0,   0, 230))),
+    # Label('tvmonitor',   rgb2bgr((119,  11,  32)))
+    Label('face', rgb2bgr((255,0,0)))
+    ]
 
 #-------------------------------------------------------------------------------
 class PascalVOCSource:
@@ -72,67 +74,53 @@ class PascalVOCSource:
         self.test_samples  = []
 
     #---------------------------------------------------------------------------
-    def __build_annotation_list(self, root, dataset_type):
+    def __build_sample_list(self, root,image_dir,info_dir):
         """
         Build a list of samples for the VOC dataset (either trainval or test)
         """
-        annot_root  = root + '/Annotations/'
-        annot_files = []
-        with open(root + '/ImageSets/Main/' + dataset_type + '.txt') as f:
-            for line in f:
-                annot_file = annot_root + line.strip() + '.xml'
-                if os.path.exists(annot_file):
-                    annot_files.append(annot_file)
-        return annot_files
-
-    #---------------------------------------------------------------------------
-    def __build_sample_list(self, root, annot_files, dataset_name):
-        """
-        Build a list of samples for the VOC dataset (either trainval or test)
-        """
-        image_root  = root + '/JPEGImages/'
         samples     = []
-
+        file = open(root+info_dir ,'r')
+        All = file.read()
+        file.close()
+        lines = All.split('\n')
+        print(len(lines))
         #-----------------------------------------------------------------------
         # Process each annotated sample
         #-----------------------------------------------------------------------
-        for fn in tqdm(annot_files, desc=dataset_name, unit='samples'):
-            with open(fn, 'r') as f:
-                doc      = lxml.etree.parse(f)
-                filename = image_root+doc.xpath('/annotation/filename')[0].text
-
-                #---------------------------------------------------------------
-                # Get the file dimensions
-                #---------------------------------------------------------------
-                if not os.path.exists(filename):
-                    continue
-
-                img     = cv2.imread(filename)
-                imgsize = Size(img.shape[1], img.shape[0])
-
-                #---------------------------------------------------------------
-                # Get boxes for all the objects
-                #---------------------------------------------------------------
-                boxes    = []
-                objects  = doc.xpath('/annotation/object')
-                for obj in objects:
-                    #-----------------------------------------------------------
-                    # Get the properties of the box and convert them to the
-                    # proportional terms
-                    #-----------------------------------------------------------
-                    label = obj.xpath('name')[0].text
-                    xmin  = int(float(obj.xpath('bndbox/xmin')[0].text))
-                    xmax  = int(float(obj.xpath('bndbox/xmax')[0].text))
-                    ymin  = int(float(obj.xpath('bndbox/ymin')[0].text))
-                    ymax  = int(float(obj.xpath('bndbox/ymax')[0].text))
-                    center, size = abs2prop(xmin, xmax, ymin, ymax, imgsize)
-                    box = Box(label, self.lname2id[label], center, size)
-                    boxes.append(box)
-                if not boxes:
-                    continue
-                sample = Sample(filename, boxes, imgsize)
-                samples.append(sample)
-
+        i=0
+        while i<(len(lines)-1)/10:
+            #---------------------------------------------------------------
+            # Get the file dimensions
+            #---------------------------------------------------------------
+            filename = root+image_dir+lines[i]
+            img = cv2.imread(filename)
+            imgsize = Size(img.shape[1], img.shape[0])
+            #---------------------------------------------------------------
+            # Get boxes for all the objects
+            #---------------------------------------------------------------
+            boxes    = []
+            i+=1
+            num_objects  = int(lines[i])
+            if not num_objects:
+                i+=2
+                continue
+            i+=1
+            for obj in range(num_objects):
+                #-----------------------------------------------------------
+                # Get the properties of the box and convert them to the
+                # proportional terms
+                #-----------------------------------------------------------
+                label = 'face'
+                xmin = int(lines[i+obj].split()[0])-int(lines[i+obj].split()[2])/2
+                xmax = int(lines[i+obj].split()[0])+int(lines[i+obj].split()[2])/2
+                ymin = int(lines[i+obj].split()[1])-int(lines[i+obj].split()[3])/2
+                ymax = int(lines[i+obj].split()[1])+int(lines[i+obj].split()[3])/2
+                center, size = abs2prop(xmin, xmax, ymin, ymax, imgsize)
+                box = Box(label, self.lname2id[label], center, size)
+                boxes.append(box)
+            i+=num_objects
+            sample = Sample(filename, boxes, imgsize)
+            samples.append(sample)
         return samples
 
     #---------------------------------------------------------------------------
@@ -147,28 +135,12 @@ class PascalVOCSource:
         #-----------------------------------------------------------------------
         # Process the samples defined in the relevant file lists
         #-----------------------------------------------------------------------
-        train_annot = []
-        train_samples = []
-        for vocid in ['VOC2007', 'VOC2012']:
-            root = data_dir + '/trainval/VOCdevkit/'+vocid
-            name = 'trainval_'+vocid
-            annot = self.__build_annotation_list(root, 'trainval')
-            train_annot += annot
-            train_samples += self.__build_sample_list(root, annot, name)
 
-        root = data_dir + '/test/VOCdevkit/VOC2007'
-        annot = self.__build_annotation_list(root, 'test')
-        train_samples += self.__build_sample_list(root, annot, 'test_VOC2007')
+        valid_samples = self.__build_sample_list(data_dir, '/WIDER_val/images/',
+                                                 '/wider_face_split/wider_face_val_bbx_gt.txt')
+        train_samples = self.__build_sample_list(data_dir,'/WIDER_train/images/',
+                                                 '/wider_face_split/wider_face_train_bbx_gt.txt')
 
-        #-----------------------------------------------------------------------
-        # We have some 5.5k annotated samples that are not on these lists, so
-        # we can use them for validation
-        #-----------------------------------------------------------------------
-        root = data_dir + '/trainval/VOCdevkit/VOC2012'
-        all_annot = set(glob(root + '/Annotations/*.xml'))
-        valid_annot = all_annot - set(train_annot)
-        valid_samples = self.__build_sample_list(root, valid_annot,
-                                                 'valid_VOC2012')
 
         #-----------------------------------------------------------------------
         # Final set up and sanity check

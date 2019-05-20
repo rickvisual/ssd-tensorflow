@@ -170,7 +170,7 @@ def main():
     parser = argparse.ArgumentParser(description='Process a dataset for SSD')
     parser.add_argument('--data-source', default='pascal_voc',
                         help='data source')
-    parser.add_argument('--data-dir', default='pascal-voc',
+    parser.add_argument('--data-dir', default='data',
                         help='data directory')
     parser.add_argument('--validation-fraction', type=float, default=0.025,
                         help='fraction of the data to be used for validation')
